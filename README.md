@@ -1,2 +1,2 @@
 # wechat-messagelistener
-only wechat message listener
+simple wechat message listener
