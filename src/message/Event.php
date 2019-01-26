@@ -1,9 +1,9 @@
 <?php
-namespace zhangv\wechat\message;
+namespace zhangv\wechat\messagelistener\message;
 /**
  * 事件推送消息
  */
-class EventMessage extends Message {
+class Event extends Message {
 	public $msgType = 'event';
 	public $event,$eventKey;
 	public $scanType,$scanResult;

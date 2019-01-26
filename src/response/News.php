@@ -1,9 +1,9 @@
 <?php
-namespace wechatclient\response;
+namespace zhangv\wechat\messagelistener\response;
 /**
  * 回复图文消息
  */
-class NewsResponse extends WechatResponse{
+class News extends Response{
 	private $template = "
 		<xml>
 			<ToUserName><![CDATA[%s]]></ToUserName>

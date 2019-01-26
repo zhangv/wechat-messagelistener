@@ -1,6 +1,6 @@
 <?php
-namespace wechatclient\response;
-class TransferCSAccountResponse{//消息转发到指定客服
+namespace zhangv\wechat\messagelistener\response;
+class TransferCSAccount{//消息转发到指定客服
 	private $template = "
 		<xml>
 		    <ToUserName><![CDATA[%s]]></ToUserName>

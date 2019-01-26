@@ -6,11 +6,14 @@
  * ref: 消息加解密:https://open.weixin.qq.com/cgi-bin/showdocument?action=dir_list&t=resource/res_list&verify=1&id=open1419318479&token=&lang=zh_CN
  * TODO: 暂未支持小程序json格式消息
  */
-namespace zhangv\wechat;
+namespace zhangv\wechat\messagelistener;
 use \Exception;
+use Monolog\Logger;
+use Psr\Log\LogLevel;
+
 require_once __DIR__ . "/wxcrypt/wxBizMsgCrypt.php";
 
-class MessageListener{
+class WechatMessageListener{
 	/**
 	 * Token
 	 * @var string
@@ -26,41 +29,60 @@ class MessageListener{
 	 * @var string
 	 */
 	private $encodingAesKey = null;
+	/** @var Logger */
 	private $logger = null;
 	private $messageHandlers = [];
 	private $eventMessageHandlers = [];
-
+	private $requestParameters = [];
 	public function __construct($token = null,$appId = null,$encodingAesKey = null){
 		$this->token = $token;
 		$this->appId = $appId;
 		$this->encodingAesKey = $encodingAesKey;
 	}
 
-	public function setLogger($logger){
+	public function setLogger(Logger $logger){
 		$this->logger = $logger;
 	}
 
-	private function log($msg){
-		if($this->logger) $this->logger->info($msg);
-		else error_log($msg);
+	private function log($msg,$level = LogLevel::ERROR){
+		if($this->logger) $this->logger->log($level,$msg);
+		else {
+			if($level == LogLevel::ERROR) error_log($msg);
+		}
 	}
 
+	/**
+	 * @param $postStr
+	 * @param $requestParams
+	 * @param bool $print
+	 * @return string|void
+	 * @throws Exception
+	 */
 	public function start($postStr,$requestParams,$print = true){
-		if($this->isValidRequest()){ //验证微信接口
-			echo $_GET['echostr'];
+		$this->requestParameters = $requestParams;
+		if($this->isValidatingRequest($requestParams)){ //验证微信接口
+			echo $requestParams['echostr'];
 			return;
 		}
-		if(!$this->checkSignature($requestParams)) throw new Exception('check signature fail');
-
+		if(!$this->checkSignature($requestParams)) throw new Exception('Signature checking failed');
 		if (!empty($postStr)) {
 			list($messageObj,$encrypted,$format) = $this->parse($postStr);
+
 			if ($messageObj && !empty($messageObj->MsgType)) {
 				$response = null;
-
-				foreach($this->messageHandlers as $handler) {
+				$msgType = (string)$messageObj->MsgType;
+				if(isset($this->messageHandlers[$msgType])) {
+					$handler = $this->messageHandlers[$msgType];
 					$response = $handler->onMessage($messageObj);
-					$response = (string)$response;
 				}
+				if($msgType === 'event'){
+					$event = (string)$messageObj->Event;
+					if(isset($this->eventMessageHandlers[$event])){
+						$handler = $this->eventMessageHandlers[$event];
+						$response = $handler->onMessage($messageObj);
+					}
+				}
+
 				if ($response) {
 					if ($print === true) {
 						if($encrypted == true){
@@ -71,10 +93,10 @@ class MessageListener{
 								$this->log('encrypt error,code='.$errcode);
 								return;
 							}
-						}else
-							echo $response;
-					}
-					else return $response;
+						}else echo $response;
+					} else return $response;
+				}else{
+					$this->log("No message handler is set for message type of [{$messageObj->MsgType}], ignore the message: {$postStr}",LogLevel::DEBUG);
 				}
 			}
 		}
@@ -99,11 +121,13 @@ class MessageListener{
 
 		$decryptedMsg = $obj;
 		if($obj && !empty($obj->Encrypt)) {
-			if (empty($obj->MsgType) || ($obj->MsgType == 'event' && $obj->Event == 'View')){//view event won't be encrypted
-				return;
-			}
-			$errcode = $this->decryptRequest($raw,$obj);
+//			if (empty($obj->MsgType) || ($obj->MsgType == 'event' && $obj->Event == 'View')){//view event won't be encrypted
+//				return;
+//			}
+			$errcode = $this->decryptMessage($raw,$decryptedMsg);
+
 			if($errcode == 0) {
+				var_dump($decryptedMsg);
 				$encrypted = true;
 				if(is_null(json_decode($decryptedMsg))) {
 					$obj = new \SimpleXMLElement($decryptedMsg,  LIBXML_NOCDATA);
@@ -113,24 +137,25 @@ class MessageListener{
 				throw new Exception('decrypt error,code='.$errcode);
 			}
 		}
+		var_dump($obj);
 		return [$obj,$encrypted,$format];
 	}
 
 	public function encryptResponse($repxml,&$encrypted){
-		$pc = new WXBizMsgCrypt($this->token, $this->encodingAesKey, $this->appId);
+		$pc = new \WXBizMsgCrypt($this->token, $this->encodingAesKey, $this->appId);
 		$timestamp = time();
 		$nonce = 'aabbccs';
 		$errCode = $pc->encryptMsg($repxml, $timestamp, $nonce, $encrypted);
 		return $errCode;
 	}
 
-	public function decryptRequest($reqxml,&$decrypted){
-		$msgSignature = empty($_REQUEST["msg_signature"])?'':$_REQUEST["msg_signature"];
-		$timestamp = empty($_REQUEST["timestamp"])?'':$_REQUEST["timestamp"];
-		$nonce = empty($_REQUEST["nonce"])?'':$_REQUEST["nonce"];
-		$encrytType = empty($_REQUEST["encrypt_type"])?'':$_REQUEST["encrypt_type"];
+	public function decryptMessage($reqxml,&$decrypted){
+		$msgSignature = empty($this->requestParameters["msg_signature"])?'':$this->requestParameters["msg_signature"];
+		$timestamp = empty($this->requestParameters["timestamp"])?'':$this->requestParameters["timestamp"];
+		$nonce = empty($this->requestParameters["nonce"])?'':$this->requestParameters["nonce"];
+		$encrytType = empty($this->requestParameters["encrypt_type"])?'':$this->requestParameters["encrypt_type"];
 		if($encrytType == 'aes'){
-			$pc = new WXBizMsgCrypt($this->token, $this->encodingAesKey, $this->appId);
+			$pc = new \WXBizMsgCrypt($this->token, $this->encodingAesKey, $this->appId);
 			$errCode = $pc->decryptMsg($msgSignature, $timestamp, $nonce, $reqxml, $decrypted);
 			return $errCode;
 		}else{
@@ -157,8 +182,8 @@ class MessageListener{
 		}
 	}
 
-	private function isValidRequest(){
-		return isset($_GET['echostr']);
+	private function isValidatingRequest($requestParams){
+		return isset($requestParams['echostr']);
 	}
 
 	public function addMessageHandler($msgType,MessageHandler $handler){

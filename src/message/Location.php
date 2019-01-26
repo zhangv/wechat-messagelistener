@@ -1,10 +1,9 @@
 <?php
-namespace wechatclient\request;
-
+namespace zhangv\wechat\messagelistener\message;
 /**
  * 地理位置消息
  */
-class LocationRequest extends WechatRequest{
+class Location extends Message{
 	public $msgType = 'location';
 	public $location_X,$location_Y,$scale,$label;
 	public function parse($xml){

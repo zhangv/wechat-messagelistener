@@ -1,9 +1,9 @@
 <?php
-namespace wechatclient\response;
+namespace zhangv\wechat\messagelistener\response;
 /**
  * 回复视频消息
  */
-class VideoResponse extends WechatResponse{
+class Video extends Response {
 	private $template = "
 		<xml>
 			<ToUserName><![CDATA[%s]]></ToUserName>

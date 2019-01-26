@@ -1,18 +1,18 @@
 <?php
-namespace zhangv\wechat\message;
+namespace zhangv\wechat\messagelistener\message;
 /**
- * 文本消息
+ * 视频消息
  */
-class TextMessage extends Message{
-	public $msgType = 'text';
-	public $content;
-	public $fields = [];
+class Video extends Message{
+	public $msgType = 'video';
+	public $mediaId,$thumbMediaId;
 	public function parse($xml){
 		$this->fromUserName = (string)$xml->FromUserName;
 		$this->toUserName = (string)$xml->ToUserName;
 		$this->createTime = (string)$xml->CreateTime;
 		$this->msgType = (string)$xml->MsgType;
-		$this->content = (string)$xml->Content;
+		$this->mediaId = (string)$xml->MediaId;
+		$this->thumbMediaId = (string)$xml->ThumbMediaId;
 		$this->msgId = (string)$xml->MsgId;
 		return $this;
 	}

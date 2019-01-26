@@ -1,7 +1,7 @@
 <?php
 
-namespace wechatclient\response;
-class TransferCSResponse{//消息转发到多客服
+namespace zhangv\wechat\messagelistener\response;
+class TransferCS{//消息转发到多客服
 	private $template = "
 		<xml>
 			<ToUserName><![CDATA[%s]]></ToUserName>

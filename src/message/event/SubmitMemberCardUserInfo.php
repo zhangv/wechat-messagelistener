@@ -4,7 +4,7 @@
  */
 use zhangv\wechat\message\EventMessage;
 
-class SubmitMemberCardUserInfoEvent extends EventMessage{
+class SubmitMemberCardUserInfo extends EventMessage{
 //<xml>
 //<ToUserName> <![CDATA[gh_3fcea188bf78]]></ToUserName>
 //<FromUserName><![CDATA[obLatjlaNQKb8FqOvt1M1x1lIBFE]]></FromUserName>

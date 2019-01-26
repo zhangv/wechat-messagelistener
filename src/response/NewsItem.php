@@ -1,7 +1,6 @@
 <?php
 
-namespace wechatclient\response;
-
+namespace zhangv\wechat\messagelistener\response;
 class NewsItem {
 	public $title,$description,$picUrl,$url;
 	public function __construct($title,$description,$picUrl,$url){

@@ -1,9 +1,9 @@
 <?php
-namespace wechatclient\response;
+namespace zhangv\wechat\messagelistener\response;
 /**
  * 回复音乐消息
  */
-class MusicResponse extends WechatResponse{
+class Music extends Response{
 	private $template = "
 		<xml>
 			<ToUserName><![CDATA[%s]]></ToUserName>

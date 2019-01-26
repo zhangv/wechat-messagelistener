@@ -1,19 +1,17 @@
 <?php
-namespace wechatclient\request;
+namespace zhangv\wechat\messagelistener\message;
 /**
- * 链接消息
+ * 图片消息
  */
-class LinkRequest extends WechatRequest{
-	public $msgType = 'link';
-	public $title,$description,$url;
+class Image extends Message{
+	public $msgType = 'image';
+	public $picUrl;
 	public function parse($xml){
 		$this->fromUserName = (string)$xml->FromUserName;
 		$this->toUserName = (string)$xml->ToUserName;
 		$this->createTime = (string)$xml->CreateTime;
 		$this->msgType = (string)$xml->MsgType;
-		$this->title = (string)$xml->Title;
-		$this->description = (string)$xml->Description;
-		$this->url = (string)$xml->Url;
+		$this->picUrl = (string)$xml->PicUrl;
 		$this->msgId = (string)$xml->MsgId;
 		return $this;
 	}
