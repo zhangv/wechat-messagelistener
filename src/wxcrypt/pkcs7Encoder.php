@@ -58,7 +58,7 @@ class PKCS7Encoder
  */
 class Prpcrypt
 {
-	public $key;
+	public $key;//aes key
 
 	function __construct($k)
 	{
@@ -68,16 +68,20 @@ class Prpcrypt
 	/**
 	 * 对明文进行加密
 	 * @param string $text 需要加密的明文
-	 * @return string 加密后的密文
+	 * @return array 加密后的密文
 	 */
-	public function encrypt($text, $appid)
-	{
-
+	public function encrypt($text, $appid) {
 		try {
+			//获得16位随机字符串，填充到明文之前
+			$random = $this->getRandomStr();//"aaaabbbbccccdddd";
+			$text = $random . pack("N", strlen($text)) . $text . $appid;
 			$iv = substr($this->key, 0, 16);
-			$encrypted = openssl_encrypt($text,'AES-256-CBC',$this->key,OPENSSL_ZERO_PADDING,$iv);
-			return array(ErrorCode::$OK, $encrypted);
+			$pkc_encoder = new PKCS7Encoder;
+			$text = $pkc_encoder->encode($text);
+			$encrypted = openssl_encrypt($text,'AES-256-CBC',substr($this->key, 0, 32),OPENSSL_ZERO_PADDING,$iv);
+			return array(ErrorCode::$OK, base64_encode($encrypted));
 		} catch (Exception $e) {
+			//print $e;
 			return array(ErrorCode::$EncryptAESError, null);
 		}
 	}
@@ -87,17 +91,14 @@ class Prpcrypt
 	 * @param string $encrypted 需要解密的密文
 	 * @return string 解密得到的明文
 	 */
-	public function decrypt($encrypted, $appid)
-	{
+	public function decrypt($encrypted, $appid) {
 
 		try {
 			$iv = substr($this->key, 0, 16);
-			$decrypted = openssl_decrypt($encrypted,'AES-256-CBC',$this->key,OPENSSL_ZERO_PADDING,$iv);
+			$decrypted = openssl_decrypt($encrypted,'AES-256-CBC',substr($this->key, 0, 32),OPENSSL_ZERO_PADDING,$iv);
 		} catch (Exception $e) {
 			return array(ErrorCode::$DecryptAESError, null);
 		}
-
-
 		try {
 			//去除补位字符
 			$pkc_encoder = new PKCS7Encoder;
@@ -110,16 +111,18 @@ class Prpcrypt
 			$xml_len = $len_list[1];
 			$xml_content = substr($content, 4, $xml_len);
 			$from_appid = substr($content, $xml_len + 4);
+			if (!$appid)
+				$appid = $from_appid;
+			//如果传入的appid是空的，则认为是订阅号，使用数据中提取出来的appid
 		} catch (Exception $e) {
 			//print $e;
 			return array(ErrorCode::$IllegalBuffer, null);
 		}
-		if ($from_appid != $appid){
-			error_log('from_appid: '.$from_appid.' current_appid: '.$appid);
+		if ($from_appid != $appid)
 			return array(ErrorCode::$ValidateAppidError, null);
-		}
-
-		return array(0, $xml_content);
+		//不注释上边两行，避免传入appid是错误的情况
+		return array(0, $xml_content, $from_appid);
+		//增加appid，为了解决后面加密回复消息的时候没有appid的订阅号会无法回复
 
 	}
 
@@ -128,9 +131,7 @@ class Prpcrypt
 	 * 随机生成16位字符串
 	 * @return string 生成的字符串
 	 */
-	function getRandomStr()
-	{
-
+	function getRandomStr() {
 		$str = "";
 		$str_pol = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz";
 		$max = strlen($str_pol) - 1;

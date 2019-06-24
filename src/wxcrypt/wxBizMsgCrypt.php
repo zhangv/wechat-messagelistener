@@ -66,7 +66,6 @@ class WXBizMsgCrypt
 			$timeStamp = time();
 		}
 		$encrypt = $array[1];
-
 		//生成安全签名
 		$sha1 = new SHA1;
 		$array = $sha1->getSHA1($this->token, $timeStamp, $nonce, $encrypt);
@@ -79,6 +78,7 @@ class WXBizMsgCrypt
 		//生成发送的xml
 		$xmlparse = new XMLParse;
 		$encryptMsg = $xmlparse->generate($encrypt, $signature, $timeStamp, $nonce);
+
 		return ErrorCode::$OK;
 	}
 

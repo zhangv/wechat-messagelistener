@@ -2,7 +2,8 @@
 namespace zhangv\wechat\messagelistener\message;
 class Message{
 	protected $array = [];
-	protected $type = null;
+	public $type = null;
+	public $fromUserName,$toUserName,$createTime,$msgId;
 
 	public function __construct($type,$obj){
 	}

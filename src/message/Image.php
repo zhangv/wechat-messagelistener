@@ -6,6 +6,7 @@ namespace zhangv\wechat\messagelistener\message;
 class Image extends Message{
 	public $msgType = 'image';
 	public $picUrl;
+
 	public function parse($xml){
 		$this->fromUserName = (string)$xml->FromUserName;
 		$this->toUserName = (string)$xml->ToUserName;

@@ -55,7 +55,7 @@ class WechatMessageListener{
 	 * @param $postStr
 	 * @param $requestParams
 	 * @param bool $print
-	 * @return string|void
+	 * @return
 	 * @throws Exception
 	 */
 	public function start($postStr,$requestParams,$print = true){
@@ -86,9 +86,11 @@ class WechatMessageListener{
 				if ($response) {
 					if ($print === true) {
 						if($encrypted == true){
-							$errcode = $this->encryptResponse($response,$encrypted);
+							$respxml = (string)$response;
+							$errcode = $this->encryptResponse($respxml,$encrypted);
 							if($errcode == 0){
-								echo $encrypted;
+								//echo $encrypted; 加密消息无法正常返回给用户，不确定是什么问题
+								echo $response;
 							}else{
 								$this->log('encrypt error,code='.$errcode);
 								return;
@@ -121,11 +123,7 @@ class WechatMessageListener{
 
 		$decryptedMsg = $obj;
 		if($obj && !empty($obj->Encrypt)) {
-//			if (empty($obj->MsgType) || ($obj->MsgType == 'event' && $obj->Event == 'View')){//view event won't be encrypted
-//				return;
-//			}
 			$errcode = $this->decryptMessage($raw,$decryptedMsg);
-
 			if($errcode == 0) {
 				var_dump($decryptedMsg);
 				$encrypted = true;
@@ -144,9 +142,19 @@ class WechatMessageListener{
 	public function encryptResponse($repxml,&$encrypted){
 		$pc = new \WXBizMsgCrypt($this->token, $this->encodingAesKey, $this->appId);
 		$timestamp = time();
-		$nonce = 'aabbccs';
+		$nonce = $this->getRandomStr();
 		$errCode = $pc->encryptMsg($repxml, $timestamp, $nonce, $encrypted);
 		return $errCode;
+	}
+
+	function getRandomStr() {
+		$str = "";
+		$str_pol = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz";
+		$max = strlen($str_pol) - 1;
+		for ($i = 0; $i < 16; $i++) {
+			$str .= $str_pol[mt_rand(0, $max)];
+		}
+		return $str;
 	}
 
 	public function decryptMessage($reqxml,&$decrypted){

@@ -2,9 +2,9 @@
 /**
  * 用户领取事件
  */
-use zhangv\wechat\message\EventMessage;
+use zhangv\wechat\messagelistener\message\Event;
 
-class UserGetCard extends EventMessage{
+class UserGetCard extends Event{
 //<xml>
 //<ToUserName><![CDATA[toUser]]></ToUserName>
 //<FromUserName><![CDATA[FromUser]]></FromUserName>

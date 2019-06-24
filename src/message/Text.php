@@ -7,6 +7,10 @@ class Text extends Message{
 	public $msgType = 'text';
 	public $content;
 	public $fields = [];
+
+	public function __construct(){
+	}
+
 	public function parse($xml){
 		$this->fromUserName = (string)$xml->FromUserName;
 		$this->toUserName = (string)$xml->ToUserName;

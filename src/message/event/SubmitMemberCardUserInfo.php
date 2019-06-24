@@ -2,9 +2,9 @@
 /**
  * 用户领取事件
  */
-use zhangv\wechat\message\EventMessage;
+use zhangv\wechat\messagelistener\message\Event;
 
-class SubmitMemberCardUserInfo extends EventMessage{
+class SubmitMemberCardUserInfo extends Event{
 //<xml>
 //<ToUserName> <![CDATA[gh_3fcea188bf78]]></ToUserName>
 //<FromUserName><![CDATA[obLatjlaNQKb8FqOvt1M1x1lIBFE]]></FromUserName>
